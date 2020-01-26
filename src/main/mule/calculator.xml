@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="5217087d-1219-4b9e-8d94-a3e1eb36942f" basePath="/calculator" >
+		<http:listener-connection host="0.0.0.0" port="8091" />
+	</http:listener-config>
+	<flow name="calculatorFlow" doc:id="570696cd-6c83-4fa1-9dd4-148ebe03b4a5" >
+		<http:listener doc:name="Listener" doc:id="df58007f-fd5c-4c40-9d85-81bab5ad8211" config-ref="HTTP_Listener_config" path="/"/>
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="8cefaca0-3612-481d-8d2e-dfdfc4335d5d" variableName="initialPayload"/>
+		<choice doc:name="Choice" doc:id="f388f743-ec56-42c7-b2a9-540bb46b5735" >
+			<when expression="#[payload.operation=='+']">
+				<flow-ref doc:name="Flow Reference" doc:id="0a81f71d-f546-4431-b2e0-037c07c843e2" name="additionFlow"/>
+			</when>
+			<when expression="#[payload.operation=='-']">
+				<flow-ref doc:name="Flow Reference" doc:id="02c9879e-a6d9-4a99-ba97-367ba838f243" name="subtractionFlow"/>
+			</when>
+			<when expression="#[payload.operation=='*']">
+				<flow-ref doc:name="Flow Reference" doc:id="d364482b-78bb-4ce1-8170-6518eceafa48" name="multiplicationFlow"/>
+			</when>
+			<when expression="#[payload.operation=='/']">
+				<flow-ref doc:name="Flow Reference" doc:id="bb1440e7-eea8-4b08-89ce-73a61a2da1ac" name="divisionFlow"/>
+			</when>
+			<otherwise >
+				<set-payload value="#[output application/json
+---
+{
+	errorMessage:'Not a Valid Operator.Available operators are &quot;+&quot;,&quot;-&quot;,&quot;*&quot;,&quot;/&quot;'
+}]" doc:name="Set Payload" doc:id="675c9c20-affc-4f28-82e9-fb75ba56ee11" />
+			</otherwise>
+		</choice>
+	</flow>
+	<sub-flow name="additionFlow" doc:id="a70a87db-8b32-4c20-b40c-7b6bf458da5b" >
+		<ee:transform doc:name="Transform Message" doc:id="372020c3-0d27-4a70-967d-d2d3e5c704ea" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	result:payload.firstnumber + payload.secondnumber
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-payload value="#[output application/json
+---
+{
+	FIrstNumberIs:vars.initialPayload.firstnumber,
+	SecondNumberIs:vars.initialPayload.secondnumber,
+	Operation:'Addition',
+	CalculatedValue:payload.result
+}]" doc:name="Set Payload" doc:id="bf5f46e4-d743-4f34-8fb3-33c516fd4b17" />
+	</sub-flow>
+	<sub-flow name="subtractionFlow" doc:id="6b0c8d2a-3000-4fa8-8850-e2d2557cc7a0" >
+		<ee:transform doc:name="Subtraction" doc:id="0629e502-7dae-4356-be54-df8a032b35fe" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	result:payload.firstnumber - payload.secondnumber
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-payload value="#[output application/json
+---
+{
+	FIrstNumberIs:vars.initialPayload.firstnumber,
+	SecondNumberIs:vars.initialPayload.secondnumber,
+	Operation:'Subtraction',
+	CalculatedValue:payload.result
+}]" doc:name="Set SubtractionResponse" doc:id="80aba045-a913-431b-bbd6-1d12b9ce6f93" />
+	</sub-flow>
+	<sub-flow name="multiplicationFlow" doc:id="d31b14f4-bed1-4c5e-94b4-b7cdccaf6c81" >
+		<ee:transform doc:name="Multiplication" doc:id="59ddbecd-28f5-46ff-ba8e-74d543c6632e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	result:payload.firstnumber * payload.secondnumber
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-payload value="#[output application/json
+---
+{
+	FIrstNumberIs:vars.initialPayload.firstnumber,
+	SecondNumberIs:vars.initialPayload.secondnumber,
+	Operation:'Multiply',
+	CalculatedValue:payload.result
+}]" doc:name="Set MultiplyResponse" doc:id="f877017d-4aba-4785-b805-860cb5d635cf" />
+	</sub-flow>
+	<sub-flow name="divisionFlow" doc:id="f1968b71-62de-4124-a9fe-93f6f4d7bfea" >
+		<ee:transform doc:name="Division" doc:id="e13488e4-878e-4d12-b08b-dfe71f9b533b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	result:payload.firstnumber / payload.secondnumber
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-payload value="#[output application/json
+---
+{
+	FIrstNumberIs:vars.initialPayload.firstnumber,
+	SecondNumberIs:vars.initialPayload.secondnumber,
+	Operation:'Division',
+	CalculatedValue:payload.result
+}]" doc:name="Set Division Response" doc:id="228b800f-6842-4c0f-a9d3-fe8f6d0768dd" />
+	</sub-flow>
+</mule>
